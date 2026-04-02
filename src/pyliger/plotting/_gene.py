@@ -1,9 +1,7 @@
-import warnings
+from warnings import warn
 
-import lazy_loader as lazy
-
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import numpy as np
+import pandas as pd
 from plotnine import (
     aes,
     element_blank,
@@ -105,8 +103,8 @@ def plot_gene(
     None.
     """
     if plot_by != scale_by and use_scaled:
-        warnings.warn(
-            "Provided values for plot_by and scale_by do not match; results may not be very interpretable."
+        warn(
+            "Provided values for plot_by and scale_by do not match; results may not be very interpretable.", stacklevel=2
         )
 
     ### 1. Extract Gene Values
@@ -310,8 +308,8 @@ def plot_gene_spatial(
     keep_scale=False,
 ):
     if plot_by != scale_by and use_scaled:
-        warnings.warn(
-            "Provided values for plot_by and scale_by do not match; results may not be very interpretable."
+        warn(
+            "Provided values for plot_by and scale_by do not match; results may not be very interpretable.", stacklevel=2
         )
 
     ### 1. Extract Gene Values

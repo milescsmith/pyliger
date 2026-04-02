@@ -1,6 +1,6 @@
-import lazy_loader as lazy
 import matplotlib as mpl
 import numpy as np
+import pandas as pd
 from plotnine import (
     aes,
     annotate,
@@ -21,7 +21,6 @@ from tqdm import tqdm
 from pyliger.tools._marker import get_factor_markers
 from pyliger.tools._metrics import calc_dataset_specificity
 
-pd  = lazy.load("pandas", error_on_import=True)
 
 def plot_gene_loadings(
     liger_object,
@@ -101,13 +100,6 @@ def plot_gene_loadings(
         tsne_df = tsne_coords.append({factorlab: H_aligned[:, i]})
         tsne_df[tsne_df[factorlab] == 0][factorlab] = np.nan
         factor_ds = factorlab + "Dataset Specificity: " + dataset_specificity[2][i]
-        data_max = np.max(H_aligned[:, i])
-
-        # plot t-SNE
-        if max_val is not None:
-            values = [0, max_val, 1]
-        else:
-            values = None
 
         def _rescale(x, _from):
             norm = mpl.colors.TwoSlopeNorm(
@@ -131,13 +123,11 @@ def plot_gene_loadings(
             p1 = p1 + ggtitle(factor_ds)
 
         # subset to specific factor and sort by p-value
-        top_genes_V1 = markers[0][markers[0]["factor_num"] == i]
-        top_genes_V1 = top_genes_V1.sort_values(by=["p_value"])["gene"]
+        top_genes_V1 = markers[0][markers[0]["factor_num"] == i].sort_values(by=["p_value"])["gene"]
 
         # don't sort for W
         top_genes_W = markers[1][markers[1]["factor_num"] == i]["gene"]
-        top_genes_V2 = markers[2][markers[2]["factor_num"] == i]
-        top_genes_V2 = top_genes_V2.sort_values(by=["p_value"])["gene"]
+        top_genes_V2 = markers[2][markers[2]["factor_num"] == i].sort_values(by=["p_value"])["gene"]
 
         top_genes_list = [top_genes_V1, top_genes_W, top_genes_V2]
         plot_list = []
@@ -149,19 +139,19 @@ def plot_gene_loadings(
             top_genes = top_genes_list[idx]
 
             # make dataframe for cum gene loadings plot
-            sorted = np.argsort(loadings_list[idx][:, i])
+            _sorted = np.argsort(loadings_list[idx][:, i])
 
             # sort by loadings instead - still only showing num_genes_show
             # look through top num.genes in loadings
-            top_loaded = sorted[len(sorted) : (len(sorted) - num_genes) : -1]
+            top_loaded = _sorted[len(_sorted) : (len(_sorted) - num_genes) : -1]
             top_genes = top_genes[top_loaded]
             if len(top_genes) == 0:
                 top_genes = ["no genes"]
 
             gene_df = pd.DataFrame(
                 {
-                    "loadings": sorted,
-                    "xpos": np.linspace(0, 1, num=len(sorted) + 1),
+                    "loadings": _sorted,
+                    "xpos": np.linspace(0, 1, num=len(_sorted) + 1),
                     "top_k": 0,
                 }
             )

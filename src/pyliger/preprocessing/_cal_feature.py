@@ -1,12 +1,11 @@
 from collections import Counter
 from pathlib import Path
 
-import lazy_loader as lazy
 import numpy as np
+import pandas as pd
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 
-pd  = lazy.load("pandas", error_on_import=True)
 
 def make_feature_matrix(
     file_dir, gene_file, promoter_file, filter_threshold, return_separate

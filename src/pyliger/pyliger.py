@@ -1,13 +1,7 @@
-import lazy_loader as lazy
-
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import numpy as np
+import pandas as pd
 from anndata import AnnData
 from scipy.sparse import vstack
-
-"""
-The pyliger main class
-"""
 
 
 class Liger:
@@ -18,42 +12,43 @@ class Liger:
     single-cell modality) matrices. The class serves as a container for results generated
     from  data preprocessing, integrative analysis, and visualization.
 
-    Attributes:
-        adata_list(list):
-            List of AnnData objects, one per experiment/dataset (cells by genes)
-            In each AnnData objects, main matrix stores raw data and two addtional
-            layers store normalized and scaled data with keys 'norm_data' and
-            'scale_data' respectively.
-            H(matrix):
-            Cell loading factors (one matrix per dataset, dimensions cells by k)
-            W(matrix):
-            Shared gene loading factors (k by genes)
-            V(matrix):
-            Dataset-specific gene loading factors (one matrix per dataset, dimensions k by genes)
-        cell_data(pd dataframe):
-            Dataframe of cell attributes across all datasets (nrows equal to total number
-            cells across all datasets)
-        var_genes(list):
-            Subset of informative genes shared across datasets to be used in matrix
-            factorization
-        H_norm(pd dataframe):
-            Normalized cell loading factors (cells across all datasets combined into single
-            matrix)
-        clusters(pd dataframe):
-            Joint cluster assignments for cells
-        tsne_coords():
-            Matrix of 2D coordinates obtained from running t-SNE on H_norm or H matrices
-        alignment_clusters():
-            Initial joint cluster assignments from shared factor alignment
-        snf(list):
-            List of values associated with shared nearest factor matrix for use in clustering and
-            alignment (out_summary contains edge weight information between cell combinations)
-        agg_data(list):
-            Data aggregated within clusters
-        parameters(list):
-            List of parameters used throughout analysis
-        version():
-            Version of package used to create object
+    Attributes
+    ----------
+    adata_list : list[:class:`anndata.AnnData`]
+        List of AnnData objects, one per experiment/dataset (cells by genes)
+        In each AnnData objects, main matrix stores raw data and two addtional
+        layers store normalized and scaled data with keys 'norm_data' and
+        'scale_data' respectively.
+    H : :class:`~numpy.typing.ArrayLike`
+        Cell loading factors (one matrix per dataset, dimensions cells by k)
+    W : :class:`~numpy.typing.ArrayLike`
+        Shared gene loading factors (k by genes)
+    V : :class:`~numpy.typing.ArrayLike`
+        Dataset-specific gene loading factors (one matrix per dataset, dimensions k by genes)
+    cell_data : :class:`pandas.DataFrame`
+        Dataframe of cell attributes across all datasets (nrows equal to total number
+        cells across all datasets)
+    var_genes(list) : list[str]
+        Subset of informative genes shared across datasets to be used in matrix
+        factorization
+    H_norm : :class:`pandas.DataFrame`
+        Normalized cell loading factors (cells across all datasets combined into single
+        matrix)
+    clusters : :class:`pandas.DataFrame`
+        Joint cluster assignments for cells
+    tsne_coords : :class:`~numpy.typing.ArrayLike`
+        Matrix of 2D coordinates obtained from running t-SNE on H_norm or H matrices
+    alignment_clusters :
+        Initial joint cluster assignments from shared factor alignment
+    snf : list
+        List of values associated with shared nearest factor matrix for use in clustering and
+        alignment (out_summary contains edge weight information between cell combinations)
+    agg_data : list
+        Data aggregated within clusters
+    parameters : list
+        List of parameters used throughout analysis
+    version :
+        Version of package used to create object
     """
 
     __slots__ = (
@@ -68,8 +63,8 @@ class Liger:
         "version",
     )
 
-    def __init__(self, adata_list=[]):
-        self.adata_list = adata_list
+    def __init__(self, adata_list: list[AnnData] | None = None):
+        self.adata_list = [] if adata_list is None else adata_list
 
     # @property
     # def adata_list(self):
@@ -78,15 +73,15 @@ class Liger:
     # def adata_list(self):
 
     @property
-    def num_samples(self):
+    def num_samples(self) -> list[AnnData]:
         return len(self.adata_list)
 
     @property
-    def num_var_genes(self):
+    def num_var_genes(self) -> int:
         return len(self.var_genes)
 
     @property
-    def sample_names(self):
+    def sample_names(self) -> list[str]:
         return [adata.uns["sample_name"] for adata in self.adata_list]
 
     @property

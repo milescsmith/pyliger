@@ -1,7 +1,5 @@
-import lazy_loader as lazy
 import matplotlib.pyplot as plt
-
-pd  = lazy.load("pandas", error_on_import=True)
+import pandas as pd
 from plotnine import (
     aes,
     element_blank,

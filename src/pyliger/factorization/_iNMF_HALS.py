@@ -1,8 +1,6 @@
 import time
 
-import lazy_loader as lazy
-
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 
 from pyliger.factorization._utilities import (
     _init_H,

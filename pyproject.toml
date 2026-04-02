@@ -1,6 +1,3 @@
-[tool.uv]
-override-dependencies = ["docopt ; sys_platform == 'never'",]
-
 [build-system]
 requires = ["uv_build>=0.7.4,<0.12.0"]
 build-backend = "uv_build"
@@ -11,10 +8,22 @@ source-excludes = [
 ]
 
 [project]
+name = "pyliger"
+version = "0.2.5"
+description = "The Python version of LIGER package."
 authors = [
     { name = "Joshua Welch", email = "welchjd@med.umich.edu" },
     { name = "Lu Lu", email = "luluhz@umich.edu" },
 ]
+license = {text = "GPL-3.0-only"}
+keywords = [
+    "LIGER",
+]
+maintainers = [
+    { name = "Andrew Robbins", email = "robbiand@med.umich.edu" },
+]
+readme = {file="README.md", content-type="text/markdown"}
+requires-python = ">=3.12,<4.0"
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -41,22 +50,7 @@ dependencies = [
     "scipy",
     "seaborn",
     "umap-learn",
-    "lazy-loader>=0.4",
 ]
-description = "The Python version of LIGER package."
-keywords = [
-    "LIGER",
-]
-maintainers = [
-    { name = "Andrew Robbins", email = "robbiand@med.umich.edu" },
-]
-name = "pyliger"
-readme = "README.md"
-requires-python = "<3.14, >=3.9"
-version = "0.2.5"
-
-[project.license]
-text = "GPL-3.0-only"
 
 [project.urls]
 homepage = "https://welch-lab.github.io"
@@ -64,6 +58,6 @@ repository = "https://github.com/welch-lab/pyliger"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15.8",
+    "ruff>=0.15.9",
     "ty>=0.0.27",
 ]

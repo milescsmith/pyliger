@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 from scipy import interpolate
 from scipy.stats.mstats import mquantiles
@@ -7,17 +9,18 @@ from pyliger.clustering._utilities import refine_clusts
 
 def quantile_norm(
     liger_object,
-    quantiles=50,
-    ref_dataset=None,
-    min_cells=20,
-    dims_use=None,
-    do_center=False,
-    max_sample=1000,
-    num_trees=None,
-    refine_knn=True,
-    knn_k=20,
-    use_ann=False,
-    rand_seed=1,
+    quantiles: int=50,
+    ref_dataset: str | None=None,
+    min_cells: int=20,
+    dims_use: list[int] | None=None,
+    do_center: bool=False,
+    max_sample: int=1000,
+    num_trees: int | None=None,
+    refine_knn: bool=True,
+    knn_k: int=20,
+    use_ann: bool=False,
+    rand_seed: int=1,
+    device: Literal["cpu", "gpu"] = "cpu",
 ):
     """Quantile align (normalize) factor loadings
 
@@ -181,7 +184,7 @@ def quantile_norm(
                     new_vals = np.repeat(0, num_cells2)
                 else:
                     # handle ties (zeros) in order to get consistent results with LIGER
-                    q1 = _mean_ties(q2, q1)
+                    q1 = _mean_ties(q2, q1, device=device)
                     warp_func = interpolate.interp1d(q2, q1)
                     new_vals = warp_func(Hs[k][cells2, i])
                 Hs[k][cells2, i] = new_vals

@@ -1,11 +1,9 @@
-import lazy_loader as lazy
+import h5sparse
 import numpy as np
 from sklearn.preprocessing import normalize as sp_normalize
 
 from pyliger._utilities import _h5_idx_generator, _remove_missing_obs
 from pyliger.pyliger import Liger
-
-h5sparse = lazy.load("h5sparse", error_on_import=True)
 
 
 def normalize(

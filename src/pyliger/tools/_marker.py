@@ -1,14 +1,10 @@
-import lazy_loader as lazy
 import numpy as np
+import pandas as pd
 from scipy.sparse import vstack
 from sklearn.preprocessing import scale
 
 from pyliger.tools import _wilcoxon
 from pyliger.tools._metrics import calc_dataset_specificity
-
-# lazy loading numpy doesn't make sense since both scipy and sklearn are going to import it above 
-# np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
 
 
 # Find shared and dataset-specific markers
@@ -111,10 +107,14 @@ def get_factor_markers(
             expr_mat.append(adata.layers["norm_data"][idx, :])
         expr_mat = vstack(expr_mat)
         cell_label = np.concatenate(
-            (np.repeat(dataset1, np.sum(labels[dataset1] == factor)),
-            np.repeat(dataset2, np.sum(labels[dataset2] == factor))),
+            (
+                np.repeat(dataset1, np.sum(labels[dataset1] == factor)),
+                np.repeat(dataset2, np.sum(labels[dataset2] == factor)),
+            ),
         )
-        wilcoxon_result = _wilcoxon._wilcoxon(np.log(expr_mat.toarray() + 1e-10), cell_label)
+        wilcoxon_result = _wilcoxon._wilcoxon(
+            np.log(expr_mat.toarray() + 1e-10), cell_label
+        )
 
         # filter based on log-fold change
         # log2fc = wilcoxon_result[wilcoxon_result['group'] == dataset1]['logFC'].to_numpy()

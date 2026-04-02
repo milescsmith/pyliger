@@ -1,7 +1,8 @@
 import warnings
 
-import lazy_loader as lazy
+import h5sparse
 import matplotlib.pyplot as plt
+import numexpr as ne
 import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import norm
@@ -9,8 +10,6 @@ from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from pyliger._utilities import _h5_idx_generator
 
-h5sparse = lazy.load("h5sparse", error_on_import=True)
-ne = lazy.load("numexpr", error_on_import=True)
 
 def select_genes(
     liger_object,

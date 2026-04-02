@@ -1,7 +1,4 @@
-import lazy_loader as lazy
-
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import numpy as np
 
 
 def calculate_qc(liger_object):

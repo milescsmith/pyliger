@@ -1,14 +1,12 @@
 from os import path
 
 import anndata as ad
-import lazy_loader as lazy
+import h5sparse
 import numpy as np
 from scipy.sparse import csr_matrix
 
 from pyliger._utilities import _create_h5_using_adata, _h5_idx_generator, _merge_sparse_data_all, _remove_missing_obs
 from pyliger.pyliger import Liger
-
-h5sparse = lazy.load("h5sparse", error_on_import=True)
 
 
 def create_liger(
@@ -135,14 +133,18 @@ def _create_liger_matrix(adata_list, make_sparse, take_gene_union, remove_missin
             adata_list[idx].X = csr_matrix(adata.X, dtype=int)
             # check if dimnames exist
             if not adata.obs.index.name or not adata.var.index.name:
+                msg = "Raw data must have both row (cell) and column (gene) names."
                 raise ValueError(
-                    "Raw data must have both row (cell) and column (gene) names."
+                    msg
                 )
             # check whether cell name is unique or not
             if not adata.obs.index.is_unique and adata.X.shape[0] > 1:
-                raise ValueError(
+                msg = (
                     "At least one cell name is repeated across datasets; "
                     "please make sure all cell names are unique."
+                )
+                raise ValueError(
+                    msg
                 )
 
     # Take gene union (requires make_sparse=True)

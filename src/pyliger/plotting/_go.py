@@ -4,22 +4,18 @@ import sys
 from collections import OrderedDict, defaultdict
 from datetime import date
 from math import log, log10
+from warnings import warn
 
-import lazy_loader as lazy
-
-matplotlib = lazy.load("matplotlib", error_on_import=True)
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
-sns = lazy.load("seaborn", error_on_import=True)
-from adjustText import (
-    adjust_text,
-)  # # Python package which rearranges plot labels to ensure minimal overlap
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from adjustText import adjust_text
 from matplotlib.colors import ListedColormap
 from sklearn.manifold import MDS
 
-matplotlib.use("Agg")
+mpl.use("Agg")
 
 
 def plot_go_term(
@@ -172,19 +168,16 @@ def plot_go_term(
     logger, logger_std = create_logger(output_dir_path, outfile_appendix)
 
     ## Convert representatives input to a list of GO terms
-    if representatives == None:
-        representatives = []
-    else:
-        representatives = representatives.split(",")
+    representatives = [] if representatives is None else representatives.split(",")
 
     ## Check if representatives are valid GO terms
     for priority in representatives:
-        if not priority.startswith("GO:") or not len(priority) == 10:
+        if not priority.startswith("GO:") or len(priority) != 10:
             logger.critical(
                 "gofigure.py: error: argument -r/--representatives contains a GO term that is not in valid GO term format: "
                 + priority
             )
-            exit()
+            sys.exit()
 
     try:
         random_state = int(random_state)
@@ -197,7 +190,7 @@ def plot_go_term(
                 + str(random_state)
                 + "' (requires an integer or 'None'"
             )
-            exit()
+            sys.exit()
 
     ## Opacity is a number from 0 to 1
     if opacity < 0 or opacity > 1:
@@ -206,7 +199,7 @@ def plot_go_term(
             + str(opacity)
             + "' (requires a floating point from 0 to 1)"
         )
-        exit()
+        sys.exit()
     if size not in ["user", "pval", "frequency", "members"]:
         try:
             size = int(size)
@@ -216,7 +209,7 @@ def plot_go_term(
                 + size
                 + "' (choose from 'members', 'frequency', 'pval', 'significant', or an integer)"
             )
-            exit()
+            sys.exit()
 
     ## Similarity cutoff is a number from 0 to 1
     if similarity_cutoff < 0 or similarity_cutoff > 1:
@@ -225,7 +218,7 @@ def plot_go_term(
             + str(similarity_cutoff)
             + "' (choose any value ranging from 0 to 1)"
         )
-        exit()
+        sys.exit()
 
     ## See if the given colour palette is valid
     try:
@@ -236,7 +229,7 @@ def plot_go_term(
             + palette
             + "' (for example, pick one of https://matplotlib.org/3.1.1/tutorials/colors/colormaps.html)"
         )
-        exit()
+        sys.exit()
 
     logger.info("GO-Figure! version: 1.0\n")
     logger.info("Date run: " + str(date.today()) + "\n")
@@ -254,21 +247,25 @@ def plot_go_term(
     )
     parents_dict, children_dict = read_parents_children(scriptPath, logger)
 
-    if ontology == "all":  ## Which ontologies to loop over
-        ontology_list = [
-            "biological_process",
-            "molecular_function",
-            "cellular_component",
-        ]
-    elif ontology == "bpo":
-        ontology = "biological_process"
-        ontology_list = [ontology]
-    elif ontology == "mfo":
-        ontology = "molecular_function"
-        ontology_list = [ontology]
-    elif ontology == "cco":
-        ontology = "cellular_component"
-        ontology_list = [ontology]
+    match ontology:
+        case "all":  ## Which ontologies to loop over
+            ontology_list = [
+                "biological_process",
+                "molecular_function",
+                "cellular_component",
+            ]
+        case "bpo":
+            ontology = "biological_process"
+            ontology_list = [ontology]
+        case "mfo":
+            ontology = "molecular_function"
+            ontology_list = [ontology]
+        case "cco":
+            ontology = "cellular_component"
+            ontology_list = [ontology]
+        case _:
+            ontology=""
+            ontology_list = []
 
     for ontology in ontology_list:
         logger_std.info("\nCalculating " + ontology.replace("_", " "))
@@ -372,8 +369,6 @@ def warn(*args, **kwargs):
     pass
 
 
-import warnings
-
 warnings.warn = warn
 
 
@@ -428,7 +423,7 @@ def process_input(input_goea, logger):
                 + str(line_count)
                 + ". Please fix duplicates before continuing."
             )
-            exit()
+            sys.exit()
         go_set.add(term)
         input_dict[term] = [term, pvalue]
         line_count += 1
@@ -477,7 +472,7 @@ def read_OBO(scriptPath, logger):
             obsolete_bool = True
             del description_dict[go]
             del namespace_dict[go]
-        elif line.startswith("consider: GO:") and obsolete_bool == True:
+        elif line.startswith("consider: GO:") and obsolete_bool:
             consider_go = line.strip().split("consider: ")[1]
             obsolete_dict[go].add(consider_go)
         elif line.startswith("data-version: "):
@@ -524,16 +519,9 @@ def calc_sem_sim(go1, go2, parents_dict, ic_dict):
         parent_IC = go2_IC
     else:
         parent_IC = 0
-        closest_parent = ""
-        for (
-            parent
-        ) in (
-            go1_parents
-        ):  ## If neither GO is a parent of the other, calculate common parent term with the highest IC content (meaning closest parent term)
+        for parent in go1_parents:  ## If neither GO is a parent of the other, calculate common parent term with the highest IC content (meaning closest parent term)
             if parent in go2_parents:
-                if ic_dict[parent] > parent_IC:
-                    parent_IC = ic_dict[parent]
-                    closest_parent = parent
+                parent_IC = max(parent_IC, ic_dict[parent])
     if not go1 == go2:
         if (
             not go1_IC == 0 and not go2_IC == 0
@@ -559,8 +547,8 @@ def create_GO_dict(
     go_dict = defaultdict(list)
     conversion_bool = False
 
-    for key, values in input_dict.items():
-        go, pval = values
+    for value in input_dict.values():
+        go, pval = value
         pval = float(pval)
         if go not in namespace_dict:
             alt_dict_namespace = False
@@ -568,23 +556,24 @@ def create_GO_dict(
                 alt_go = go
                 go = alt_dict[go]
                 if namespace_dict[go] == namespace_input:
-                    if conversion_bool == False:
+                    if conversion_bool is False:
                         logger.info(
                             "The following GO terms are converted or deleted because either they are an alt_id and not a primary id in the go.obo, because they are obsolete in the go.obo, or because they can't be found in the go.obo: \n\nOriginal GO\tNew GO(s)\tReason"
                         )
                         conversion_bool = True
                     logger.info(alt_go + "\t" + go + "\talt_id")
-                    alt_dict_namespace == True
-            elif go not in alt_dict or alt_dict_namespace == False:
-                if conversion_bool == False:
+                    # is the below supposed to be `alt_dict_namespace = True`?
+                    # alt_dict_namespace == True
+            elif go not in alt_dict or alt_dict_namespace is False:
+                if not conversion_bool:
                     logger.info(
                         "The following GO terms are converted or deleted because either they are an alt_id and not a primary id in the go.obo, because they are obsolete in the go.obo, or because they can't be found in the go.obo: \n\nOriginal GO\tNew GO(s)\tReason"
                     )
                     conversion_bool = True
-                logger.info("\t" + go + "\tremoved")
+                logger.info(f"\t{go}\tremoved")
         if namespace_dict[go] == namespace_input and max_pval >= pval:
             if go in obsolete_dict:
-                if conversion_bool == False:
+                if not conversion_bool:
                     logger.info(
                         "The following GO terms are converted or deleted because either they are an alt_id and not a primary id in the go.obo, because they are obsolete in the go.obo, or because they can't be found in the go.obo: \n\nOriginal GO\tNew GO(s)\tReason"
                     )
@@ -627,13 +616,11 @@ def create_clusters(
     top_level,
 ):
     go_dict = OrderedDict(go_dict.items())
-    if priorities == None:
-        priorities = []
-    bool = True
+    priorities = [] if priorities is None else priorities
+    _bool = True
     sem_sim_dict = defaultdict(list)
-    prev_set = set()
 
-    if top_level == None:
+    if top_level is None:
         top_level_terms = []
     else:
         top_level_terms = top_level.split(",")
@@ -642,8 +629,8 @@ def create_clusters(
         if top_level_term in go_dict:
             pval, user, ic, frequency = go_dict[top_level_term]
             top_level_dict[top_level_term] = ic
-    while bool == True:
-        bool2 = True
+    while _bool:
+        _bool2 = True
         golist = list(OrderedDict(go_dict))
         for go in golist:  ## Loop over every GO term
             if go in go_dict:
@@ -685,16 +672,14 @@ def create_clusters(
                     # for go2,values2 in go_dict.items(): ## Loop over every GO term within the loop so they can be compared
                     if not go2 == go and go2 in go_dict:  ## Exclude the same GO term
                         if (
-                            (go_top_level_bool == False and go2_top_level_bool == False)
+                            (go_top_level_bool is False and go2_top_level_bool is False)
                             or (
-                                go_top_level_bool == True
-                                and go2_top_level_bool == False
+                                go_top_level_bool is True
+                                and go2_top_level_bool is False
                                 and go2 in children_dict[go]
                             )
                             or (
-                                go_top_level_bool == False
-                                and go2_top_level_bool == True
-                                and go in children_dict[go2_top_level_term]
+                                go_top_level_bool is False and go2_top_level_bool is True and go in children_dict[go2_top_level_term]
                             )
                         ):
                             pval2, user2, ic2, frequency2 = go_dict[go2]
@@ -844,9 +829,7 @@ def create_clusters(
                             ]
                         )
                         go2_bool = True
-                    if (
-                        go1_bool == True
-                    ):  ## If the original term is not chosen as a representative and already has an entry in the sem_sim_dict, add its values to the 2nd GO term in the sem_sim_dict and delete the old entry
+                    if go1_bool:  ## If the original term is not chosen as a representative and already has an entry in the sem_sim_dict, add its values to the 2nd GO term in the sem_sim_dict and delete the old entry
                         if go in sem_sim_dict:
                             for val in sem_sim_dict[go]:
                                 if val not in sem_sim_dict[highest_sem_sim_GO]:
@@ -854,7 +837,7 @@ def create_clusters(
                             del sem_sim_dict[go]
                         del go_dict[go]
 
-                    if go2_bool == True:
+                    if go2_bool:
                         if highest_sem_sim_GO in sem_sim_dict:
                             for val in sem_sim_dict[highest_sem_sim_GO]:
                                 if val not in sem_sim_dict[go]:
@@ -866,17 +849,13 @@ def create_clusters(
                     go not in sem_sim_dict
                 ):  ## If no go term is found with a semantic similarity >= cutoff, make a new entry in the sem_sim_dict
                     sem_sim_dict[go].append([go, pval, user, ic, frequency])
-        for (
-            go
-        ) in (
-            golist
-        ):  ## This loop makes sure the above workflow is looped until no changes are made, by checking if the go_dict keys are present as a key in sem_sim_dict. Any key not present in sem_sim_dict after every loop is deleted. Once all go_dict keys == sem_sim_dict keys, bool2 == true and therefore bool == false and while loop ends
+        for go in golist:  ## This loop makes sure the above workflow is looped until no changes are made, by checking if the go_dict keys are present as a key in sem_sim_dict. Any key not present in sem_sim_dict after every loop is deleted. Once all go_dict keys == sem_sim_dict keys, bool2 == true and therefore bool == false and while loop ends
             if go not in sem_sim_dict:
-                bool2 = False
+                _bool2 = False
                 if go in go_dict:
                     del go_dict[go]
-        if bool2 == True:
-            bool = False
+        if _bool2:
+            _bool = False
     return sem_sim_dict
 
 
@@ -890,8 +869,6 @@ def create_clusterdict(sem_sim_dict, description_dict):
             user = value[2]
             if go not in dup_set:
                 dup_set.add(go)
-                name = description_dict[go]
-                key_name = description_dict[key]
                 cluster_dict[key].append([go, float(user)])
     return cluster_dict
 
@@ -914,7 +891,7 @@ def create_df(
     sum_user,
     sort_by,
 ):
-    if not random_state_input == None:
+    if random_state_input is not None:
         random_state_input = int(random_state_input)
     order = list(cluster_dict.keys())  ## Keep static order of df
     sem_array = np.zeros((len(order), len(order)))
@@ -947,14 +924,12 @@ def create_df(
     description_list = []  ## Names of GO terms
     count_list = []  ## Counts of GO terms in cluster
     legend_list = []  ## DF holding the legend descriptions
-    size_criterium_list = (
-        []
-    )  ## Values which will be used to size the clusters in the scatterplot
+    size_criterium_list = []  ## Values which will be used to size the clusters in the scatterplot
     go_list = []  ## List of GO terms part of the cluster
     count = 1  ## Index number
     user_defined_values_list = []  ## User defined value
 
-    if name_changes == None:
+    if name_changes is None:
         name_changes_list = []
     else:
         name_changes_list = name_changes.split(",")
@@ -966,7 +941,7 @@ def create_df(
         colours = colours.lower()
         colour_criterium = log10(float(go_dict[go][0]))
         pval = float(go_dict[go][0])
-        if sum_user == False:
+        if not sum_user:
             user = go_dict[go][1]
         pval_list.append(pval)
         goterms = cluster_dict[go]
@@ -978,9 +953,9 @@ def create_df(
             if goterm[0] in name_changes_list:
                 new_go = goterm[0]
                 new_description = description_dict[goterm[0]]
-        if sum_user == False:
+        if not sum_user:
             user = go_dict[go][1]
-        elif sum_user == True:
+        else:
             user = 0
             for goterm in goterms:
                 user += go_dict[goterm[0]][1]
@@ -1112,30 +1087,27 @@ def scatterplot(
         max_clusters
     )  ## If a maximum amount of clusters is given, truncate dataframe
     colour_criterium = df["colour"]
-    n = df.size
-    if legend_columns == "single":  ## Determine legend column number
-        colnumber = 1
-    elif legend_columns == "double":
-        colnumber = 2
-    elif legend_columns == "triple":
-        colnumber = 3
-    if size_range == "small":  ## Determine size range of clusters
-        size_range = (200, 2000)
-    elif size_range == "medium":
-        size_range = (400, 4000)
-    elif size_range == "big":
-        size_range = (600, 6000)
+
+    match legend_columns: ## Determine legend column number
+        case "single":
+            colnumber = 1
+        case "double":
+            colnumber = 2
+        case "triple":
+            colnumber = 3
+    match size_range: ## Determine size range of clusters
+        case "small":
+            size_range = (200, 2000)
+        case "medium":
+            size_range = (400, 4000)
+        case "big":
+            size_range = (600, 6000)
     if str.isdigit(
         str(size)
     ):  ## If size range is changed using fixed integer, use that
         size = int(size) * 200
         size_range = (size, size)
-    if (
-        colour.lower() == "log10-pval"
-        or colour.lower() == "user"
-        or colour.lower() == "pval"
-        or colour.lower() == "members"
-    ):  ## This and below if-statement to colour clusters
+    if colour.lower() in {"log10-pval", "user","pval","members",}:  ## This and below if-statement to colour clusters
         norm = plt.Normalize(colour_criterium.min(), colour_criterium.max())
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         ax = sns.scatterplot(
@@ -1169,7 +1141,7 @@ def scatterplot(
         legend_position = "right"
     elif legend_position.lower() == "right":
         legend_position = "left"
-    empty_handle = matplotlib.patches.Rectangle(
+    empty_handle = mpl.patches.Rectangle(
         (0, 0), 1, 1, fill=False, edgecolor="none", visible=False
     )  ## Below statements fix the legend
     handle_list = [empty_handle] * max_labels
@@ -1219,10 +1191,7 @@ def scatterplot(
                     alpha=opacity,
                 )
     elif (
-        cluster_labels == "go"
-        or cluster_labels == "go-arrows"
-        or cluster_labels == "description"
-        or cluster_labels == "description-numbered"
+        cluster_labels in {"go", "go-arrows", "description", "description-numbered"}
     ):
         texts = []
         if cluster_labels == "description-numbered":
@@ -1319,12 +1288,10 @@ def scatterplot(
                 )
 
         if (
-            cluster_labels == "go-arrows"
-            or cluster_labels == "description"
-            or cluster_labels == "description-numbered"
+            cluster_labels in {"go-arrows", "description", "description-numbered"}
         ):
             adjust_text(
-                texts, arrowprops=dict(arrowstyle="->", color="red", alpha=0.5)
+                texts, arrowprops={"arrowstyle": "->", "color": "red", "alpha": 0.5}
             )  ## Python package to make sure labels overlap as little as possible
         else:
             adjust_text(texts)
@@ -1335,24 +1302,24 @@ def scatterplot(
     ):  ## Change label on the right based on values used for colour determination
         kwargs = {"format": "%.0f"}
         colorbar = ax.figure.colorbar(sm, alpha=0.5, **kwargs)
-        if zlabel == None:
-            if colour.lower() == "user":
-                colorbar.set_label(zlabel)
-
-            elif colour.lower() == "members":
-                colorbar.set_label("Unique GO terms per cluster")
-            elif colour.lower() == "frequency":
-                colorbar.set_label("Frequency of GO term in the GOA database")
-            elif colour.lower() == "user":
-                colorbar.set_label("Significantly enriched GO terms per cluster")
-            elif colour.lower() == "pval":
-                colorbar.set_label("pvalue")
-            elif colour.lower() == "log10-pval":
-                colorbar.set_label("log10 pvalue")
+        if zlabel is None:
+            match colour.lower():
+                case "user":
+                    colorbar.set_label(zlabel)
+                case "members":
+                    colorbar.set_label("Unique GO terms per cluster")
+                case "frequency":
+                    colorbar.set_label("Frequency of GO term in the GOA database")
+                case "user":
+                    colorbar.set_label("Significantly enriched GO terms per cluster")
+                case "pval":
+                    colorbar.set_label("pvalue")
+                case "log10-pval":
+                    colorbar.set_label("log10 pvalue")
         else:
             colorbar.set_label(zlabel)
         colorbar.ax.tick_params(size=0)
-    if not title == None:
+    if title is not None:
         ax.set_title(title, fontsize=title_size)
     fig = ax.get_figure()
     if outfile_appendix == "":

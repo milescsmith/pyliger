@@ -1,11 +1,10 @@
-import lazy_loader as lazy
+import h5sparse
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.utils.sparsefuncs import inplace_column_scale
 
 from pyliger._utilities import _h5_idx_generator
 
-h5sparse = lazy.load("h5sparse", error_on_import=True)
 
 def scale_not_center(
     liger_object, remove_missing=True, chunk_size: int | None = 1000

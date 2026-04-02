@@ -1,8 +1,5 @@
-import lazy_loader as lazy
-
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 import numpy.linalg as nla
-import scipy.linalg as sla
 import scipy.sparse as sps
 
 from pyliger._utilities import _h5_idx_generator

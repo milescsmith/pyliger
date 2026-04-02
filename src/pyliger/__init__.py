@@ -17,3 +17,27 @@ from .read_write import read_10X, read_10X_h5, read_10X_visium
 from .tools._quantile_norm import quantile_norm
 from .tools._umap import run_umap
 from .tools._wilcoxon import run_wilcoxon
+
+__all__ = [
+    "Liger",
+    "create_liger",
+    "iNMF_HALS",
+    "leiden_cluster",
+    "louvain_cluster",
+    "make_feature_matrix",
+    "normalize",
+    "online_iNMF",
+    "optimize_ALS",
+    "plot_by_dataset_and_cluster",
+    "plot_gene",
+    "plot_gene_loadings",
+    "plot_spatial",
+    "quantile_norm",
+    "read_10X",
+    "read_10X_h5",
+    "read_10X_visium",
+    "run_umap",
+    "run_wilcoxon",
+    "scale_not_center",
+    "select_genes",
+]

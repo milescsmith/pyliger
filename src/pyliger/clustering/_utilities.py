@@ -1,7 +1,6 @@
-import lazy_loader as lazy
-
-ig = lazy.load("igraph", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
+import igraph as ig
+import numpy as np
+import numpy.typing as npt
 from annoy import AnnoyIndex
 from numba import njit
 from pynndescent import NNDescent
@@ -9,8 +8,9 @@ from scipy.sparse import csr_matrix
 from sklearn.neighbors import NearestNeighbors
 
 
-def run_knn(H, k):
-    """ """
+def run_knn(H: npt.ArrayLike, k: int) -> np.ndarray:
+    """
+    """
     neigh = NearestNeighbors(n_neighbors=k, radius=0, algorithm="kd_tree")
     neigh.fit(H)
     H_knn = neigh.kneighbors(H, n_neighbors=k, return_distance=False)
@@ -18,7 +18,7 @@ def run_knn(H, k):
     return H_knn
 
 
-def run_ann(H, k, num_trees=None):
+def run_ann(H: npt.ArrayLike, k: int, num_trees: int | None=None) -> np.ndarray:
     # implementation using annoy library
     num_observations = H.shape[0]
 
@@ -41,17 +41,13 @@ def run_ann(H, k, num_trees=None):
 
     # create knn indices matrices
     H_knn = np.vstack([t.get_nns_by_vector(H[i], k) for i in range(num_observations)])
-    # for i in range(num_observations):
-    #    if i == 0:
-    #        H_knn = np.array(t.get_nns_by_vector(H[i], k))
-    #    else:
-    #        H_knn = np.vstack((H_knn, t.get_nns_by_vector(H[i], k)))
+
 
     return H_knn
 
 
 def run_pynndescent(H, k, num_trees=None):
-    num_observations = H.shape[0]
+    # num_observations = H.shape[0]
 
     index = NNDescent(H)
     H_knn = index.query(H, k=k)
@@ -60,7 +56,7 @@ def run_pynndescent(H, k, num_trees=None):
 
 
 @njit
-def cluster_vote(clusts, H_knn, k):
+def cluster_vote(clusts: npt.ArrayLike, H_knn: npt.ArrayLike, k: int):
     """"""
     for i in range(H_knn.shape[0]):
         clust_counts = {}
@@ -84,7 +80,13 @@ def cluster_vote(clusts, H_knn, k):
     return clusts
 
 
-def refine_clusts(H, clusts, k, use_ann, num_trees=None):
+def refine_clusts(
+    H: npt.ArrayLike,
+    clusts: npt.ArrayLike,
+    k: int,
+    use_ann: bool,
+    num_trees: int | None=None
+    ):
     """helper function for refining clusters related to function quantile_norm"""
     if use_ann:
         H_knn = run_ann(H, k, num_trees)
@@ -128,7 +130,7 @@ def build_igraph(snn):
         weights = weights.A1
     g = ig.Graph()
     g.add_vertices(snn.shape[0])
-    g.add_edges(list(zip(sources, targets, strict=False)))
+    g.add_edges(list(zip(sources, targets)))
     g.es["weight"] = weights
 
     return g

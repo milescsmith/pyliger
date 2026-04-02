@@ -1,14 +1,13 @@
 from functools import reduce
 
-import lazy_loader as lazy
+import numpy as np
+import pandas as pd
 import statsmodels.stats.multitest as smt
 from numba import njit
 from scipy.sparse import vstack
 from scipy.stats import distributions
 from sklearn.preprocessing import normalize as sp_normalize
 
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
 
 def run_wilcoxon(liger_object, compare_method, data_use="all"):
     """Perform Wilcoxon rank-sum test

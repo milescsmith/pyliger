@@ -1,13 +1,14 @@
 import os
 
-import lazy_loader as lazy
-
-h5sparse = lazy.load("h5sparse", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
+import h5sparse
+import numpy as np
+import numpy.typing as npt
 from anndata import AnnData
 
 
-def _merge_sparse_data_all(adata_list, library_names=None):
+def _merge_sparse_data_all(
+    adata_list: list[AnnData], library_names: list[str] | None = None
+) -> AnnData:
     """Function to merge all sparse data into a single one
 
     Function takes in a list of DGEs, with gene row names and cell column names,
@@ -35,7 +36,7 @@ def _merge_sparse_data_all(adata_list, library_names=None):
     return merged_adata
 
 
-def _remove_missing_obs(adata, slot_use="raw_data", use_rows=True):
+def _remove_missing_obs(adata: AnnData, slot_use: str="raw_data", use_rows: bool=True):
     """Remove cells/genes with no expression across any genes/cells
 
     Removes cells/genes from chosen slot with no expression in any genes or cells respectively.
@@ -95,7 +96,7 @@ def _remove_missing_obs(adata, slot_use="raw_data", use_rows=True):
     return adata
 
 
-################################## For Use of hdf5 ################################
+#### For Use of hdf5 ####
 def _h5_idx_generator(chunk_size, matrix_size):
     """ """
     previous_idx = 0
@@ -121,17 +122,17 @@ def merge_H5(
     data_name=None,
     genes_name=None,
     barcodes_name=None,
-):
+) -> None:
     return None
 
 
-def nonneg(x, eps=1e-16):
+def nonneg(x: npt.ArrayLike, eps=1e-16) -> np.ndarray:
     """Given a input matrix, set all negative values to be zero"""
     x[x < eps] = eps
     return x
 
 
-def _create_h5_using_adata(adata, chunk_size):
+def _create_h5_using_adata(adata: AnnData, chunk_size: int) -> None:
     # create h5 file.
     if not os.path.isdir("./results"):
         os.mkdir("./results")

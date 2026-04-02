@@ -2,16 +2,13 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
-import lazy_loader as lazy
+import mygene
 from goatools.anno.genetogo_reader import Gene2GoReader
 from goatools.base import download_go_basic_obo, download_ncbi_associations
 from goatools.goea.go_enrichment_ns import GOEnrichmentStudyNS
 from goatools.obo_parser import GODag
 
-mygene = lazy.load("mygene", error_on_import=True)
-# from __future__ import print_function
 
-# methods = Literal["bonferroni", "sidak", "holm", "fdr_bh"]
 def run_GO_analysis(
     gene_list, background, data_source: Literal["human", "mouse"], result_path=None, alpha=0.05, methods: list[Literal["bonferroni", "sidak", "holm", "fdr_bh"]] | None = None
 ):

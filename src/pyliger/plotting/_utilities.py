@@ -1,6 +1,4 @@
-import lazy_loader as lazy
-
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 
 
 def get_gene_values(

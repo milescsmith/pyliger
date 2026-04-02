@@ -18,16 +18,16 @@ from plotnine import (
 def plot_by_dataset_and_cluster(
     liger_object,
     clusters=None,
-    title=None,
-    pt_size=0.3,
-    text_size=10,
-    do_shuffle=True,
-    rand_seed=1,
-    axis_labels=None,
-    do_legend=True,
-    legend_size=7,
-    return_plots=False,
-    legend_text_size=12,
+    title: str | None=None,
+    pt_size: float=0.3,
+    text_size: int=10,
+    do_shuffle: bool=True,
+    rand_seed: int=1,
+    axis_labels: tuple[str, str] | None=None,
+    do_legend: bool=True,
+    legend_size: int=7,
+    return_plots: bool=False,
+    legend_text_size: int=12,
 ):
     """Plot t-SNE coordinates of cells across datasets
 
@@ -42,25 +42,27 @@ def plot_by_dataset_and_cluster(
     liger_object : TYPE
         DESCRIPTION.
     clusters : TYPE, optional
-        DESCRIPTION. The default is None.
-    title : TYPE, optional
-        DESCRIPTION. The default is None.
-    pt_size : TYPE, optional
-        DESCRIPTION. The default is 0.3.
-    text_size : TYPE, optional
-        DESCRIPTION. The default is 3.
-    do_shuffle : TYPE, optional
-        DESCRIPTION. The default is True.
-    rand_seed : TYPE, optional
-        DESCRIPTION. The default is 1.
-    axis_labels : TYPE, optional
-        DESCRIPTION. The default is None.
-    do_legend : TYPE, optional
-        DESCRIPTION. The default is True.
-    legend_size : TYPE, optional
-        DESCRIPTION. The default is 5.
-    return_plots : TYPE, optional
-        DESCRIPTION. The default is False.
+        DESCRIPTION
+    title : str, optional
+        DESCRIPTION.
+    pt_size : float, default=0.3
+        DESCRIPTION.
+    text_size : int, default=3
+        DESCRIPTION.
+    do_shuffle : bool, default=True
+        DESCRIPTION.
+    rand_seed : int, default=1
+        DESCRIPTION.
+    axis_labels : tuple[str, str], optional
+        DESCRIPTION.
+    do_legend : bool, default=True
+        DESCRIPTION.
+    legend_size : int, default=5
+        DESCRIPTION.
+    legend_text_size : int, default=12
+        DESCRIPTION.
+    return_plots : bool, default=Fakse
+        DESCRIPTION.
 
     Returns
     -------

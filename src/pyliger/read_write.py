@@ -1,16 +1,14 @@
+# TODO: does anything in here work? it looks like there are a lot of variables that just sort of pop up without being defined.
 import json
 import os
 import re
 from pathlib import Path
 
-import lazy_loader as lazy
-
-anndata = lazy.load("anndata", error_on_import=True)
-h5py = lazy.load("h5py", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import anndata as ad
+import h5py
+import numpy as np
+import pandas as pd
 import scipy.io
-from anndata import AnnData
 from matplotlib.image import imread
 from scipy.sparse import csc_matrix, csr_matrix
 from sklearn.preprocessing import normalize as sp_normalize
@@ -127,14 +125,14 @@ def read_10X(
 
             # equal to make.unique function in R
             count_dict = {}
-            for i in range(len(row_names)):
+            for i, _ in enumerate(row_names):
                 name = row_names[i]
                 if name not in count_dict:
                     count_dict[name] = 0
                 if name in row_names:
                     count_dict[name] += 1
                     if count_dict[name] > 1:
-                        row_names[i] = row_names[i] + "." + str(count_dict[name] - 1)
+                        row_names[i] = f"{row_names[i]}.{count_dict[name] - 1!s}"
 
             row_names = pd.DataFrame(row_names, columns=["gene_name"])
 
@@ -153,13 +151,13 @@ def read_10X(
         # TODO: check atac feature file
         if features.shape[1] == 1:
             sample_datatypes = np.array(["Chromatin Accessibility"])
-            adata = AnnData(csr_matrix(raw_data), obs=row_names, var=col_names)
+            adata = ad.AnnData(csr_matrix(raw_data), obs=row_names, var=col_names)
             adata.uns["sample_name"] = sample_names[i]
             adata.uns["data_type"] = "Chromatin Accessibility"
             data_list.append(adata)
         elif features.shape[1] < 3:
             sample_datatypes = np.array(["Gene Expression"])
-            adata = AnnData(csr_matrix(raw_data), obs=row_names, var=col_names)
+            adata = ad.AnnData(csr_matrix(raw_data), obs=row_names, var=col_names)
             adata.uns["sample_name"] = sample_names[i]
             adata.uns["data_type"] = "Gene Expression"
             data_list.append(adata)
@@ -174,7 +172,7 @@ def read_10X(
                 subset_row_names = row_names[idx]
                 subset_row_names = pd.DataFrame(subset_row_names, columns=["gene_name"])
                 subset_data = raw_data[:, sample_datatypes == name]
-                adata = AnnData(
+                adata = ad.AnnData(
                     csr_matrix(subset_data), obs=subset_row_names, var=col_names
                 )
                 adata.uns["sample_name"] = sample_names[i]
@@ -207,7 +205,7 @@ def read_10X(
         # return_dges = MergeSparseDataAll()
         # if only one type of data present
         if len(return_dges) == 1:
-            print(f"Returning {datatypes} data matrix")
+            print(f"Returning {data_type} data matrix")
 
     else:
         return data_list
@@ -222,7 +220,7 @@ def read_10X_h5(
     use_raw=False,
     backed=False,
     chunk_size=1000,
-) -> AnnData:
+) -> ad.AnnData:
     """
     need to be improved a lot
     :param sample_dir:
@@ -254,7 +252,7 @@ def read_10X_h5(
 
     ### 2. Save AnnData or hdf5 if backed
     if not backed:
-        adata = AnnData(
+        adata = ad.AnnData(
             raw_data,
             obs=barcodes,
             var=features,
@@ -274,7 +272,7 @@ def read_10X_h5(
                 else:
                     f['raw_data'].append(raw_data[left:right, :])
         """
-        adata = AnnData(
+        adata = ad.AnnData(
             raw_data,
             obs=barcodes,
             var=features,
@@ -286,7 +284,7 @@ def read_10X_h5(
         )
         _create_h5_using_adata(adata, chunk_size)
         adata.write_h5ad(filename="./results/" + sample_name + ".h5ad")
-        adata = anndata.read_h5ad(
+        adata = ad.read_h5ad(
             filename="./results/" + sample_name + ".h5ad", backed=True
         )
 
@@ -376,13 +374,13 @@ def read_10X_multiome(sample_dir, sample_name):
     features = features.set_index("gene_name")
 
     rna_idx = features["feature_type"] == "Gene Expression"
-    adata_atac = AnnData(
+    adata_atac = ad.AnnData(
         raw_data[:, ~rna_idx],
         obs=barcodes,
         var=features[~rna_idx],
         uns={"sample_name": sample_name, "data_type": "Gene Expression"},
     )
-    adata_rna = AnnData(
+    adata_rna = ad.AnnData(
         raw_data[:, rna_idx],
         obs=barcodes,
         var=features[rna_idx],
@@ -398,8 +396,8 @@ def read_10X_atac():
     pass
 
 
-def save(dir, overwrite="None"):
-    p = Path(dir)
+def save(directory, overwrite="None"):
+    p = Path(directory)
     if p.exists():
         if overwrite is True:
             pass
@@ -408,8 +406,8 @@ def save(dir, overwrite="None"):
 
 def save_cellxgene(liger_object, save_dir, return_adata=False):
     """ """
-    concat_adata = anndata.concat(liger_object.adata_list)
-    cellxgene_adata = AnnData(
+    concat_adata = ad.concat(liger_object.adata_list)
+    cellxgene_adata = ad.AnnData(
         csc_matrix(
             np.log2(
                 sp_normalize(concat_adata.raw.X, axis=1, norm="l1").toarray() * 10000
@@ -436,7 +434,7 @@ def write_h5(liger_object, save_dir):
     pass
 
 
-def load(dir, backed="None"):
+def load(directory, backed="None"):
     pass
 
 
@@ -463,8 +461,9 @@ def _build_path(sample_dir, use_filtered, reference):
         elif reference is None:
             references = os.listdir(sample_dir + "/raw_gene_bc_matrices")
             if len(references) > 1:
+                msg = "Multiple reference genomes found. Please specify a single one."
                 raise ValueError(
-                    "Multiple reference genomes found. Please specify a single one."
+                    msg
                 )
             else:
                 reference = references[0]
@@ -475,14 +474,14 @@ def _build_path(sample_dir, use_filtered, reference):
         is_v3 = os.path.exists(sample_dir + "/features.tsv.gz")
 
     suffix = str(np.where(is_v3, ".gz", ""))
-    if data_type == "rna":
-        features_file = str(
-            np.where(is_v3, sample_dir + "/features.tsv.gz", sample_dir + "/genes.tsv")
-        )
-    elif data_type == "atac":
-        features_file = str(
-            np.where(is_v3, sample_dir + "/peaks.bed.gz", sample_dir + "/peaks.bed")
-        )
+    # if data_type == "rna":
+    #     features_file = str(
+    #         np.where(is_v3, sample_dir + "/features.tsv.gz", sample_dir + "/genes.tsv")
+    #     )
+    # elif data_type == "atac":
+    #     features_file = str(
+    #         np.where(is_v3, sample_dir + "/peaks.bed.gz", sample_dir + "/peaks.bed")
+    #     )
 
     return sample_dir, suffix
 
