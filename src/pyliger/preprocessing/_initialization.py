@@ -1,21 +1,22 @@
 from os import path
-from typing import List, Optional
 
+import anndata as ad
 import lazy_loader as lazy
-h5sparse = lazy.load("h5sparse", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 from scipy.sparse import csr_matrix
 
-from pyliger._utilities import _h5_idx_generator, _create_h5_using_adata, _merge_sparse_data_all, _remove_missing_obs
+from pyliger._utilities import _create_h5_using_adata, _h5_idx_generator, _merge_sparse_data_all, _remove_missing_obs
 from pyliger.pyliger import Liger
+
+h5sparse = lazy.load("h5sparse", error_on_import=True)
 
 
 def create_liger(
-    adata_list: List,
+    adata_list: list[ad.AnnData],
     make_sparse: bool = True,
     take_gene_union: bool = False,
     remove_missing: bool = True,
-    chunk_size: Optional[int] = 1000,
+    chunk_size: int | None = 1000,
 ) -> Liger:
     """Create a liger object.
 
@@ -131,7 +132,7 @@ def _create_liger_matrix(adata_list, make_sparse, take_gene_union, remove_missin
     if make_sparse:
         for idx, adata in enumerate(adata_list):
             # force raw data to be csr matrix
-            adata_list[idx].X = csr_matrix(adata_list[idx].X, dtype=int)
+            adata_list[idx].X = csr_matrix(adata.X, dtype=int)
             # check if dimnames exist
             if not adata.obs.index.name or not adata.var.index.name:
                 raise ValueError(
@@ -151,9 +152,7 @@ def _create_liger_matrix(adata_list, make_sparse, take_gene_union, remove_missin
             missing_genes = np.ravel(np.sum(merged_data.X, axis=0)) == 0
             if np.sum(missing_genes) > 0:
                 print(
-                    "Removing {} genes not expressed in any cells across merged datasets.".format(
-                        np.sum(missing_genes)
-                    )
+                    f"Removing {np.sum(missing_genes)} genes not expressed in any cells across merged datasets."
                 )
                 # show gene name when the total of missing genes is less than 25
                 if np.sum(missing_genes) < 25:

@@ -1,16 +1,19 @@
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Literal
+
 import lazy_loader as lazy
-mygene = lazy.load("mygene", error_on_import=True)
 from goatools.anno.genetogo_reader import Gene2GoReader
 from goatools.base import download_go_basic_obo, download_ncbi_associations
 from goatools.goea.go_enrichment_ns import GOEnrichmentStudyNS
 from goatools.obo_parser import GODag
 
+mygene = lazy.load("mygene", error_on_import=True)
 # from __future__ import print_function
 
-
+# methods = Literal["bonferroni", "sidak", "holm", "fdr_bh"]
 def run_GO_analysis(
-    gene_list, background, data_source, result_path=None, alpha=0.05, methods=["fdr_bh"]
+    gene_list, background, data_source: Literal["human", "mouse"], result_path=None, alpha=0.05, methods: list[Literal["bonferroni", "sidak", "holm", "fdr_bh"]] | None = None
 ):
     """
     Wrapper function to run GOATOOLS
@@ -21,6 +24,12 @@ def run_GO_analysis(
     methods: defult multipletest correction method
     :return:
     """
+
+    if methods is None:
+        methods = ["fdr_bh"]
+    elif not isinstance(methods, Sequence):
+        methods = [methods]
+
     ### 0. Preprocessing parameters
     # determine data source
     if data_source == "human":
@@ -44,9 +53,9 @@ def run_GO_analysis(
     obodag, ns2assoc = _load_go(obo_fname, fin_gene2go, taxids)
 
     ### 2b. Process background gene set
-    if type(background[0]) == int:
+    if isinstance(background[0], int):
         background_ids = background
-    elif type(background[0]) == str:
+    elif isinstance(background[0], str):
         background_ids = _symbols_to_ids(background, taxids[0])
 
     ### 3. Initialize a GOEA object
@@ -60,9 +69,9 @@ def run_GO_analysis(
     )  # defult multipletest correction method
 
     ### 4. Load study genes
-    if type(gene_list[0]) == int:
+    if isinstance(gene_list[0], int):
         geneids_study = gene_list
-    elif type(gene_list[0]) == str:
+    elif isinstance(gene_list[0], str):
         geneids_study = _symbols_to_ids(gene_list, taxids[0])
 
     ### 5. Run GOEA

@@ -1,5 +1,4 @@
-import lazy_loader as lazy
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 from scipy import interpolate
 from scipy.stats.mstats import mquantiles
 
@@ -162,10 +161,8 @@ def quantile_norm(
                 )
                 max_H = np.max(Hs[k][cells2, i])
                 min_H = np.min(Hs[k][cells2, i])
-                if q2[-1] < max_H:
-                    q2[-1] = max_H
-                if q2[0] > min_H:
-                    q2[0] = min_H
+                q2[-1] = max(q2[-1], max_H)
+                q2[0] = min(q2[0], min_H)
                 q1 = mquantiles(
                     np.random.permutation(Hs[ref_dataset_idx][cells1, i])[
                         0 : min(num_cells1, max_sample)
@@ -192,7 +189,6 @@ def quantile_norm(
         # assign H_norm to corresponding adata
         liger_object.adata_list[k].obsm["H_norm"] = Hs[k]
 
-    return None
 
 
 def _mean_ties(x, y):

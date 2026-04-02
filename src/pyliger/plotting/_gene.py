@@ -1,6 +1,6 @@
-import lazy_loader as lazy
 import warnings
-from typing import Optional
+
+import lazy_loader as lazy
 
 np = lazy.load("numpy", error_on_import=True)
 pd  = lazy.load("pandas", error_on_import=True)
@@ -31,7 +31,7 @@ def plot_gene(
     use_raw: bool = False,
     use_scaled: bool = False,
     scale_by="dataset",
-    log2scale: Optional[bool] = None,
+    log2scale: bool | None = None,
     methylation_indices=None,
     plot_by="dataset",
     set_dr_lims=False,
@@ -187,10 +187,10 @@ def plot_gene(
     # expand clip values if only single provided
     num_levels = dr_df["plot_by"].nunique()
     if min_clip is None:
-        min_clip = dict(zip(liger_object.sample_names, np.repeat(np.nan, num_levels)))
+        min_clip = dict(zip(liger_object.sample_names, np.repeat(np.nan, num_levels), strict=False))
 
     if max_clip is None:
-        max_clip = dict(zip(liger_object.sample_names, np.repeat(np.nan, num_levels)))
+        max_clip = dict(zip(liger_object.sample_names, np.repeat(np.nan, num_levels), strict=False))
 
     ###!!!    #if min_clip is not None and
     ### 3. Create plot for each dataset
@@ -228,15 +228,14 @@ def plot_gene(
                 )
             else:
                 ggp = ggp + scale_color_gradientn(colors=cols_use, na_value=zero_color)
+        elif keep_scale:
+            ggp = ggp + scale_color_cmap(
+                cmap_name=option,
+                na_value=zero_color,
+                limits=[min_exp_val, max_exp_val],
+            )
         else:
-            if keep_scale:
-                ggp = ggp + scale_color_cmap(
-                    cmap_name=option,
-                    na_value=zero_color,
-                    limits=[min_exp_val, max_exp_val],
-                )
-            else:
-                ggp = ggp + scale_color_cmap(cmap_name=option, na_value=zero_color)
+            ggp = ggp + scale_color_cmap(cmap_name=option, na_value=zero_color)
 
         if set_dr_lims:
             ggp = ggp + xlim(lim1) + ylim(lim2)
@@ -293,7 +292,7 @@ def plot_gene_spatial(
     use_raw: bool = False,
     use_scaled: bool = False,
     scale_by="dataset",
-    log2scale: Optional[float] = None,
+    log2scale: float | None = None,
     methylation_indices=None,
     plot_by="dataset",
     set_dr_lims=False,

@@ -1,7 +1,6 @@
 import lazy_loader as lazy
-mpl = lazy.load("matplotlib", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import matplotlib as mpl
+import numpy as np
 from plotnine import (
     aes,
     annotate,
@@ -22,6 +21,7 @@ from tqdm import tqdm
 from pyliger.tools._marker import get_factor_markers
 from pyliger.tools._metrics import calc_dataset_specificity
 
+pd  = lazy.load("pandas", error_on_import=True)
 
 def plot_gene_loadings(
     liger_object,

@@ -1,12 +1,12 @@
 from collections import Counter
 from pathlib import Path
-import lazy_loader as lazy
 
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import lazy_loader as lazy
+import numpy as np
 from anndata import AnnData
 from scipy.sparse import csr_matrix
 
+pd  = lazy.load("pandas", error_on_import=True)
 
 def make_feature_matrix(
     file_dir, gene_file, promoter_file, filter_threshold, return_separate
@@ -92,7 +92,7 @@ def _extract_barcodes(bedmat):
     for i in range(bedmat.shape[0]):
         row = bedmat.iloc[i]
 
-        if type(row[6]) == str:
+        if isinstance(row[6], str):
             barcodes = row[6].split(";")
         else:
             barcodes = []

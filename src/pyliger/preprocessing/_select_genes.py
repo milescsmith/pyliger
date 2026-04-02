@@ -1,16 +1,16 @@
 import warnings
 
 import lazy_loader as lazy
-h5sparse = lazy.load("h5sparse", error_on_import=True)
 import matplotlib.pyplot as plt
-ne = lazy.load("numexpr", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import norm
 from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from pyliger._utilities import _h5_idx_generator
 
+h5sparse = lazy.load("h5sparse", error_on_import=True)
+ne = lazy.load("numexpr", error_on_import=True)
 
 def select_genes(
     liger_object,
@@ -109,7 +109,7 @@ def select_genes(
                 i
             ].var.index.str.upper()
 
-        trx_per_cell = liger_object.adata_list[i].obs["nUMI"].to_numpy()
+        trx_per_cell = liger_object.adata_list[i].obs["nUMI"].to_numpy()  # noqa: F841
         gene_expr_mean = liger_object.adata_list[i].var["norm_mean"].to_numpy()
 
         # On-disk mode (set for online learning approach)
@@ -143,17 +143,16 @@ def select_genes(
             # Optimize to find value of x which gives the desired number of genes for this dataset
             # if very small number of genes requested, var.thresh may need to exceed 1
             optimized = minimize(
-                fun=num_var_genes, x0=[0], agrs=num_genes[i], tol=tol, bounds=[(0, 1.5)]
+                fun=num_var_genes, x0=[0], args=num_genes[i], tol=tol, bounds=[(0, 1.5)]
             )
             var_thresh[i] = optimized.x
             if var_thresh[i].shape[0] > 1:
                 warnings.warn(
-                    "Returned number of genes for dataset {} differs from requested by {}. Lower tol or alpha_thresh for better results.".format(
-                        i, optimized.x.shape[0]
-                    )
+                    f"Returned number of genes for dataset {i} differs from requested by {optimized.x.shape[0]}. Lower tol or alpha_thresh for better results.",
+                    stacklevel=2
                 )
 
-        temp = var_thresh[i]
+        temp = var_thresh[i]  # noqa: F841
         select_gene = ne.evaluate(
             "((gene_expr_var / nolan_constant) > gene_mean_upper) & (log10(gene_expr_var) > (base_gene_lower + temp))"
         )
@@ -196,16 +195,15 @@ def select_genes(
 
     if genes_use.shape[0] == 0:
         warnings.warn(
-            'No genes were selected; lower var_thresh values or choose "union" for combine parameter'
+            'No genes were selected; lower var_thresh values or choose "union" for combine parameter', stacklevel=2
         )
 
     liger_object.var_genes = genes_use
-    for idx, adata in enumerate(liger_object.adata_list):
+    for idx, _ in enumerate(liger_object.adata_list):
         var_gene_idx = (
             liger_object.adata_list[idx].var.index.isin(genes_use).nonzero()[0]
         )
         liger_object.adata_list[idx].uns["var_gene_idx"] = var_gene_idx
-    return None
 
 
 def _calc_var_online(adata, gene_expr_mean, chunk_size):
@@ -236,10 +234,10 @@ def _calc_var_matrix(adata):
     # gene_expr_var = np.ravel(
     #    np.var(adata.layers['norm_data'].toarray(), axis=0, dtype=np.float64, ddof=1))
 
-    num_sampels = adata.shape[0]
+    num_samples = adata.shape[0]  # noqa: F841
     _, gene_expr_var = mean_variance_axis(adata.layers["norm_data"], axis=0)
     gene_expr_var = ne.evaluate(
-        "gene_expr_var * num_sampels / (num_sampels-1)"
+        "gene_expr_var * num_samples / (num_samples-1)"
     )  # change ddof
     adata.var["norm_var"] = gene_expr_var
 

@@ -1,11 +1,15 @@
 import lazy_loader as lazy
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
+import numpy as np
 from scipy.sparse import vstack
 from sklearn.preprocessing import scale
 
 from pyliger.tools import _wilcoxon
 from pyliger.tools._metrics import calc_dataset_specificity
+
+# lazy loading numpy doesn't make sense since both scipy and sklearn are going to import it above 
+# np = lazy.load("numpy", error_on_import=True)
+pd  = lazy.load("pandas", error_on_import=True)
+
 
 # Find shared and dataset-specific markers
 def get_factor_markers(
@@ -70,9 +74,7 @@ def get_factor_markers(
 
     if len(factors_use) < 2:
         print(
-            "Warning: only {} factors passed the dataset specificity threshold.".format(
-                len(factors_use)
-            )
+            f"Warning: only {len(factors_use)} factors passed the dataset specificity threshold."
         )
 
     ### Extract values
@@ -97,9 +99,7 @@ def get_factor_markers(
             or np.sum(labels[dataset2] == factor) <= 1
         ):
             print(
-                "Warning: factor {} did not appear as max in any cell in either dataset.".format(
-                    factor
-                )
+                f"Warning: factor {factor} did not appear as max in any cell in either dataset."
             )
             continue
 
@@ -132,14 +132,14 @@ def get_factor_markers(
         V2 = V2[filtered_genes_V2, :]
 
         if np.sum(filtered_genes_V1) == 0:
-            top_genes_V1 = None
+            top_genes_V1 = []
         else:
             top_genes_V1 = liger_object.adata_list[dataset1].var.index[
                 np.argsort(V1[:, factor])[0:num_genes]
             ]
 
         if len(filtered_genes_V2) == 0:
-            top_genes_V2 = None
+            top_genes_V2 = []
         else:
             top_genes_V2 = liger_object.adata_list[dataset2].var.index[
                 np.argsort(V2[:, factor])[0:num_genes]
@@ -161,7 +161,7 @@ def get_factor_markers(
         pvals = []  # order is V1, V2, W
         top_genes = [top_genes_V1, top_genes_V2, top_genes_W]
 
-        for idx, gene_list in enumerate(top_genes):
+        for gene_list in top_genes:
             pvals.append(
                 wilcoxon_result[
                     (wilcoxon_result["feature"].isin(gene_list))

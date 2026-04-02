@@ -1,9 +1,9 @@
 import lazy_loader as lazy
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
-umap  = lazy.load("umap", error_on_import=True)
+import umap
 import umap.plot
 
+np = lazy.load("numpy", error_on_import=True)
+pd  = lazy.load("pandas", error_on_import=True)
 
 def run_umap(
     liger_object,
@@ -104,7 +104,6 @@ def run_umap(
     liger_object.save_obsm(umap_coords, "umap_coords")
 
     liger_object.tsne_coords = pd.DataFrame(umap_coords, columns=["tsne1", "tsne2"])
-    return None
 
 
 # Perform t-SNE dimensionality reduction

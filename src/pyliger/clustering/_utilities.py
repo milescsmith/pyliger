@@ -1,4 +1,5 @@
 import lazy_loader as lazy
+
 ig = lazy.load("igraph", error_on_import=True)
 np = lazy.load("numpy", error_on_import=True)
 from annoy import AnnoyIndex
@@ -127,7 +128,7 @@ def build_igraph(snn):
         weights = weights.A1
     g = ig.Graph()
     g.add_vertices(snn.shape[0])
-    g.add_edges(list(zip(sources, targets)))
+    g.add_edges(list(zip(sources, targets, strict=False)))
     g.es["weight"] = weights
 
     return g
@@ -142,4 +143,3 @@ def _assign_cluster(cluster, liger_object):
             idx : (idx + adata.shape[0])
         ]
         idx += adata.shape[0]
-    return None

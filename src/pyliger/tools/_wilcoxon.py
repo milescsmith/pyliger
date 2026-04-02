@@ -1,12 +1,14 @@
 from functools import reduce
+
 import lazy_loader as lazy
-np = lazy.load("numpy", error_on_import=True)
-pd  = lazy.load("pandas", error_on_import=True)
 import statsmodels.stats.multitest as smt
+from numba import njit
 from scipy.sparse import vstack
 from scipy.stats import distributions
 from sklearn.preprocessing import normalize as sp_normalize
 
+np = lazy.load("numpy", error_on_import=True)
+pd  = lazy.load("pandas", error_on_import=True)
 
 def run_wilcoxon(liger_object, compare_method, data_use="all"):
     """Perform Wilcoxon rank-sum test
@@ -28,17 +30,21 @@ def run_wilcoxon(liger_object, compare_method, data_use="all"):
     """
     ### Check parameter inputs
     if compare_method not in ["datasets", "clusters"]:
+        msg = "Parameter *compare.method* should be either *clusters* or *datasets*."
         raise ValueError(
-            "Parameter *compare.method* should be either *clusters* or *datasets*."
+            msg
         )
+    min_number_inputs = 2
     if compare_method == "datasets":
-        if len(liger_object.adata_list) < 2:
+        if len(liger_object.adata_list) < min_number_inputs:
+            msg = "Should have at least TWO inputs to compare between datasets."
             raise ValueError(
-                "Should have at least TWO inputs to compare between datasets."
+                msg
             )
-        if isinstance(data_use, list) and len(data_use) < 2:
+        if isinstance(data_use, list) and len(data_use) < min_number_inputs:
+            msg = "Should have at least TWO inputs to compare between datasets."
             raise ValueError(
-                "Should have at least TWO inputs to compare between datasets."
+                msg
             )
 
     ### Create feature x sample matrix
@@ -108,7 +114,8 @@ def run_wilcoxon(liger_object, compare_method, data_use="all"):
     ### Perform wilcoxon test
     if compare_method == "clusters":  # compare between clusters across datasets
         num_rows = feature_matrix.shape[1]
-        if num_rows > 100000:
+        too_many_rows = 100000
+        if num_rows > too_many_rows:
             print("Calculating Large-scale Input...")
         results = _wilcoxon(np.log(feature_matrix.toarray() + 1e-10), clusters)
         gene_label = np.tile(gene_name, len(np.unique(clusters)))
@@ -131,9 +138,7 @@ def run_wilcoxon(liger_object, compare_method, data_use="all"):
             sub_matrix = feature_matrix[sub_idx, :]
             if len(np.unique(sub_cell_source)) == 1:
                 print(
-                    "Note: Skip Cluster {} since it has only ONE data source.".format(
-                        group
-                    )
+                    f"Note: Skip Cluster {group} since it has only ONE data source."
                 )
             else:
                 data.append(_wilcoxon(np.log(sub_matrix.toarray() + 1e-10), sub_label))
@@ -155,7 +160,8 @@ def run_wilcoxon(liger_object, compare_method, data_use="all"):
 def _wilcoxon(X, y, groups_use=None, verbose=True, lable_use=None):
     ### Check and possibly correct input values
     if X.shape[0] != len(y):
-        raise ValueError("Number of columns of X does not match length of y")
+        msg = "Number of columns of X does not match length of y"
+        raise ValueError(msg)
 
     if groups_use is not None:
         idx_use = np.isin(groups_use, y)
@@ -215,9 +221,6 @@ def _wilcoxon(X, y, groups_use=None, verbose=True, lable_use=None):
         "padj": np.asarray(padj),
     }
     return pd.DataFrame(data=summary)
-
-
-from numba import jit, njit
 
 
 @njit

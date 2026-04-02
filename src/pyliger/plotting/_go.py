@@ -9,6 +9,7 @@ import lazy_loader as lazy
 
 matplotlib = lazy.load("matplotlib", error_on_import=True)
 import matplotlib.pyplot as plt
+
 np = lazy.load("numpy", error_on_import=True)
 pd  = lazy.load("pandas", error_on_import=True)
 sns = lazy.load("seaborn", error_on_import=True)
@@ -206,7 +207,7 @@ def plot_go_term(
             + "' (requires a floating point from 0 to 1)"
         )
         exit()
-    if not size in ["user", "pval", "frequency", "members"]:
+    if size not in ["user", "pval", "frequency", "members"]:
         try:
             size = int(size)
         except:
@@ -356,7 +357,6 @@ def plot_go_term(
 
     logger_std.info("Finished!")
 
-    return None
 
 
 ##
@@ -562,7 +562,7 @@ def create_GO_dict(
     for key, values in input_dict.items():
         go, pval = values
         pval = float(pval)
-        if not go in namespace_dict:
+        if go not in namespace_dict:
             alt_dict_namespace = False
             if go in alt_dict:
                 alt_go = go
@@ -575,7 +575,7 @@ def create_GO_dict(
                         conversion_bool = True
                     logger.info(alt_go + "\t" + go + "\talt_id")
                     alt_dict_namespace == True
-            elif not go in alt_dict or alt_dict_namespace == False:
+            elif go not in alt_dict or alt_dict_namespace == False:
                 if conversion_bool == False:
                     logger.info(
                         "The following GO terms are converted or deleted because either they are an alt_id and not a primary id in the go.obo, because they are obsolete in the go.obo, or because they can't be found in the go.obo: \n\nOriginal GO\tNew GO(s)\tReason"
@@ -602,11 +602,10 @@ def create_GO_dict(
                     .replace("}", "")
                     + "\tObsolete"
                 )
-            else:
-                if namespace_dict[go] == namespace_input and max_pval >= float(pval):
-                    ic = float(ic_dict[go])
-                    frequency = float(frequency_dict[go])
-                    go_dict[go] = [pval, 0, ic, frequency]
+            elif namespace_dict[go] == namespace_input and max_pval >= float(pval):
+                ic = float(ic_dict[go])
+                frequency = float(frequency_dict[go])
+                go_dict[go] = [pval, 0, ic, frequency]
 
     if "GO:0008150" in go_dict:
         del go_dict["GO:0008150"]
@@ -729,7 +728,7 @@ def create_clusters(
                             ]
                         )
                         go2_bool = True
-                    elif highest_sem_sim_GO in priorities and not go in priorities:
+                    elif highest_sem_sim_GO in priorities and go not in priorities:
                         sem_sim_dict[highest_sem_sim_GO].append(
                             [go, pval, user, ic, frequency]
                         )
@@ -850,7 +849,7 @@ def create_clusters(
                     ):  ## If the original term is not chosen as a representative and already has an entry in the sem_sim_dict, add its values to the 2nd GO term in the sem_sim_dict and delete the old entry
                         if go in sem_sim_dict:
                             for val in sem_sim_dict[go]:
-                                if not val in sem_sim_dict[highest_sem_sim_GO]:
+                                if val not in sem_sim_dict[highest_sem_sim_GO]:
                                     sem_sim_dict[highest_sem_sim_GO].append(val)
                             del sem_sim_dict[go]
                         del go_dict[go]
@@ -858,13 +857,13 @@ def create_clusters(
                     if go2_bool == True:
                         if highest_sem_sim_GO in sem_sim_dict:
                             for val in sem_sim_dict[highest_sem_sim_GO]:
-                                if not val in sem_sim_dict[go]:
+                                if val not in sem_sim_dict[go]:
                                     sem_sim_dict[go].append(val)
                             del sem_sim_dict[highest_sem_sim_GO]
                         del go_dict[highest_sem_sim_GO]
 
                 elif (
-                    not go in sem_sim_dict
+                    go not in sem_sim_dict
                 ):  ## If no go term is found with a semantic similarity >= cutoff, make a new entry in the sem_sim_dict
                     sem_sim_dict[go].append([go, pval, user, ic, frequency])
         for (
@@ -872,7 +871,7 @@ def create_clusters(
         ) in (
             golist
         ):  ## This loop makes sure the above workflow is looped until no changes are made, by checking if the go_dict keys are present as a key in sem_sim_dict. Any key not present in sem_sim_dict after every loop is deleted. Once all go_dict keys == sem_sim_dict keys, bool2 == true and therefore bool == false and while loop ends
-            if not go in sem_sim_dict:
+            if go not in sem_sim_dict:
                 bool2 = False
                 if go in go_dict:
                     del go_dict[go]
@@ -889,7 +888,7 @@ def create_clusterdict(sem_sim_dict, description_dict):
         for value in values:
             go = value[0]
             user = value[2]
-            if not go in dup_set:
+            if go not in dup_set:
                 dup_set.add(go)
                 name = description_dict[go]
                 key_name = description_dict[key]
@@ -1069,16 +1068,15 @@ def create_df(
                         legend_description + "\n    " + go + " " + description
                     )
             df.loc[index, "legend"] = legend_description
-        else:  ## Else, fill legend normally
-            if cluster_labels.lower() == "numbered":
-                df.loc[index, "legend"] = str(index) + row["legend"]
-            elif (
-                cluster_labels.lower() == "go"
-                or cluster_labels.lower() == "go-arrows"
-                or cluster_labels.lower() == "description-numbered"
-                or cluster_labels.lower() == "description"
-            ):
-                df.loc[index, "legend"] = str(index) + row["legend"]
+        elif cluster_labels.lower() == "numbered":
+            df.loc[index, "legend"] = str(index) + row["legend"]
+        elif (
+            cluster_labels.lower() == "go"
+            or cluster_labels.lower() == "go-arrows"
+            or cluster_labels.lower() == "description-numbered"
+            or cluster_labels.lower() == "description"
+        ):
+            df.loc[index, "legend"] = str(index) + row["legend"]
     return (df, semsim_dict)
 
 
@@ -1289,37 +1287,36 @@ def scatterplot(
                             alpha=opacity,
                         )
                     )
+        elif len(df.index) >= max_labels:
+            for line in range(1, max_labels + 1):
+                texts.append(
+                    ax.text(
+                        df.x[line],
+                        df.y[line],
+                        str(line) + ". " + df.representative[line],
+                        horizontalalignment="center",
+                        verticalalignment="center",
+                        size="small",
+                        color="black",
+                        weight="semibold",
+                        alpha=opacity,
+                    )
+                )
         else:
-            if len(df.index) >= max_labels:
-                for line in range(1, max_labels + 1):
-                    texts.append(
-                        ax.text(
-                            df.x[line],
-                            df.y[line],
-                            str(line) + ". " + df.representative[line],
-                            horizontalalignment="center",
-                            verticalalignment="center",
-                            size="small",
-                            color="black",
-                            weight="semibold",
-                            alpha=opacity,
-                        )
+            for line in range(1, len(df.index) + 1):
+                texts.append(
+                    ax.text(
+                        df.x[line],
+                        df.y[line],
+                        str(line) + ". " + df.representative[line],
+                        horizontalalignment="center",
+                        verticalalignment="center",
+                        size="small",
+                        color="black",
+                        weight="semibold",
+                        alpha=opacity,
                     )
-            else:
-                for line in range(1, len(df.index) + 1):
-                    texts.append(
-                        ax.text(
-                            df.x[line],
-                            df.y[line],
-                            str(line) + ". " + df.representative[line],
-                            horizontalalignment="center",
-                            verticalalignment="center",
-                            size="small",
-                            color="black",
-                            weight="semibold",
-                            alpha=opacity,
-                        )
-                    )
+                )
 
         if (
             cluster_labels == "go-arrows"
@@ -1423,7 +1420,7 @@ def create_cluster_table(
         for member in members:
             go, pval, user_val, ic, frequency = member
             description = description_dict[go]
-            if not go in member_set:
+            if go not in member_set:
                 outfile.write(
                     "\n"
                     + representative
@@ -1432,13 +1429,13 @@ def create_cluster_table(
                     + "\t"
                     + description
                     + "\t"
-                    + "{:.3e}".format(pval)
+                    + f"{pval:.3e}"
                     + "\t"
-                    + "{:.3e}".format(user_val)
+                    + f"{user_val:.3e}"
                     + "\t"
-                    + "{:.3e}".format(ic)
+                    + f"{ic:.3e}"
                     + "\t"
-                    + "{:.3e}".format(frequency)
+                    + f"{frequency:.3e}"
                 )
             member_set.add(go)
     outfile.close()

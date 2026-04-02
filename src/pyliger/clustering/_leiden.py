@@ -1,4 +1,5 @@
 import lazy_loader as lazy
+
 leidenalg = lazy.load("leidenalg", error_on_import=True)
 np = lazy.load("numpy", error_on_import=True)
 
@@ -90,4 +91,3 @@ def leiden_cluster(
     ### 4. Assign cluster results
     _assign_cluster(cluster, liger_object)
 
-    return None

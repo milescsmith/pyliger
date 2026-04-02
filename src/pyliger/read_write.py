@@ -207,7 +207,7 @@ def read_10X(
         # return_dges = MergeSparseDataAll()
         # if only one type of data present
         if len(return_dges) == 1:
-            print("Returning {} data matrix".format(datatypes))
+            print(f"Returning {datatypes} data matrix")
 
     else:
         return data_list
@@ -232,11 +232,10 @@ def read_10X_h5(
     ### 0. Parameter checking
     if file_name is not None:
         file_path = Path(sample_dir, file_name)
+    elif use_raw:
+        file_path = Path(sample_dir, "raw_feature_bc_matrix.h5")
     else:
-        if use_raw:
-            file_path = Path(sample_dir, "raw_feature_bc_matrix.h5")
-        else:
-            file_path = Path(sample_dir, "filtered_feature_bc_matrix.h5")
+        file_path = Path(sample_dir, "filtered_feature_bc_matrix.h5")
 
     ### 1. Read h5 file
     with h5py.File(file_path, "r") as f:
@@ -461,15 +460,14 @@ def _build_path(sample_dir, use_filtered, reference):
 
         if is_v3:
             sample_dir = sample_dir + "/" + matrix_prefix + "_feature_bc_matrix"
-        else:
-            if reference is None:
-                references = os.listdir(sample_dir + "/raw_gene_bc_matrices")
-                if len(references) > 1:
-                    raise ValueError(
-                        "Multiple reference genomes found. Please specify a single one."
-                    )
-                else:
-                    reference = references[0]
+        elif reference is None:
+            references = os.listdir(sample_dir + "/raw_gene_bc_matrices")
+            if len(references) > 1:
+                raise ValueError(
+                    "Multiple reference genomes found. Please specify a single one."
+                )
+            else:
+                reference = references[0]
         if reference is None:
             reference = ""
         sample_dir = sample_dir + "/" + matrix_prefix + "_gene_bc_matrices/" + reference

@@ -1,19 +1,15 @@
-from pathlib import Path
-from typing import Optional
-
 import lazy_loader as lazy
-h5sparse = lazy.load("h5sparse", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 from sklearn.preprocessing import normalize as sp_normalize
 
 from pyliger._utilities import _h5_idx_generator, _remove_missing_obs
 from pyliger.pyliger import Liger
 
-PARRENT_PATH = Path(__file__).parent
+h5sparse = lazy.load("h5sparse", error_on_import=True)
 
 
 def normalize(
-    liger_object: Liger, remove_missing: bool = True, chunk_size: Optional[int] = 1000
+    liger_object: Liger, remove_missing: bool = True, chunk_size: int | None = 1000
 ) -> None:
     """Normalize raw datasets to row sums
 
@@ -55,7 +51,6 @@ def normalize(
         liger_object.adata_list[idx].var["norm_sum_sq"] = norm_sum_sq
         liger_object.adata_list[idx].var["norm_mean"] = norm_sum / adata.shape[0]
 
-    return None
 
 
 def _normalize_online(adata, chunk_size):

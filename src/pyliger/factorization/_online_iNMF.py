@@ -1,13 +1,11 @@
 import lazy_loader as lazy
+
 h5sparse = lazy.load("h5sparse", error_on_import=True)
 np = lazy.load("numpy", error_on_import=True)
 from scipy.sparse import vstack
 from tqdm import tqdm
 
 from pyliger._utilities import _h5_idx_generator
-from pyliger.preprocessing._initialization import _initialization_online
-from pyliger.preprocessing._normalization import _normalize_online
-from pyliger.preprocessing._scale import _scale_online
 from pyliger.factorization._utilities import (
     _init_V_online,
     _init_W,
@@ -16,6 +14,9 @@ from pyliger.factorization._utilities import (
     nnlsm_blockpivot,
     nonneg,
 )
+from pyliger.preprocessing._initialization import _initialization_online
+from pyliger.preprocessing._normalization import _normalize_online
+from pyliger.preprocessing._scale import _scale_online
 
 
 # from memory_profiler import profile
@@ -119,7 +120,6 @@ def online_iNMF(
                 liger_object, X_new, verbose, matrices_init_dict, factorization_params
             )
 
-    return None
 
 
 def _online_iNMF_from_scratch(
@@ -175,7 +175,6 @@ def _online_iNMF_from_scratch(
         liger_object.adata_list[i].varm["B"] = B[i]
         liger_object.adata_list[i].uns["A"] = A[i]
 
-    return None
 
 
 def _online_iNMF_refine(
@@ -183,7 +182,7 @@ def _online_iNMF_refine(
 ):
     """ """
     if verbose:
-        print("{} new datasets detected.".format(len(X_new)))
+        print(f"{len(X_new)} new datasets detected.")
 
     ### 0. Extract required information
     # prepare basic dataset profiles
@@ -265,7 +264,6 @@ def _online_iNMF_refine(
     for adata in X_new:
         liger_object.adata_list.append(adata)
 
-    return None
 
 
 def _projection(liger_object, X_new, W_init, k, miniBatch_size):
@@ -328,7 +326,6 @@ def _projection(liger_object, X_new, W_init, k, miniBatch_size):
         # add object into liger object TODO: think of another way of appending adata into liger object
         liger_object.adata_list.append(X_new[i])
 
-    return None
 
 
 def _online_iNMF_cal_W_V(

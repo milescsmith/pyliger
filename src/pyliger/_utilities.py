@@ -1,6 +1,7 @@
 import os
 
 import lazy_loader as lazy
+
 h5sparse = lazy.load("h5sparse", error_on_import=True)
 np = lazy.load("numpy", error_on_import=True)
 from anndata import AnnData
@@ -78,9 +79,7 @@ def _remove_missing_obs(adata, slot_use="raw_data", use_rows=True):
     if np.sum(missing) > 0:
         # logging.info('Removing {} {} not expressing{} in {}.'.format(np.sum(missing), removed, expressed, data_type))
         print(
-            "Removing {} {} not expressing{} in {}.".format(
-                np.sum(missing), removed, expressed, data_type
-            )
+            f"Removing {np.sum(missing)} {removed} not expressing{expressed} in {data_type}."
         )
         if use_rows:
             # show gene name when the total of missing is less than 25
@@ -110,10 +109,8 @@ def _h5_idx_generator(chunk_size, matrix_size):
         yield int(previous_idx), int(current_idx)
         previous_idx += chunk_size
         current_idx += chunk_size
-        if current_idx > matrix_size:
-            current_idx = matrix_size
+        current_idx = min(current_idx, matrix_size)
         iter += 1
-    return None
 
 
 def merge_H5(
@@ -151,4 +148,3 @@ def _create_h5_using_adata(adata, chunk_size):
                 )
             else:
                 f["raw_data"].append(adata[left:right, :].X)
-    return None

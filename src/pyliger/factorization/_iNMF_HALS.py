@@ -1,5 +1,6 @@
-import lazy_loader as lazy
 import time
+
+import lazy_loader as lazy
 
 np = lazy.load("numpy", error_on_import=True)
 
@@ -88,7 +89,7 @@ def iNMF_HALS(
         obj_train = obj_train_approximation + value_lambda * obj_train_penalty
 
         # print start information
-        print("Initial Training Obj: {}".format(obj_train))
+        print(f"Initial Training Obj: {obj_train}")
 
         iteration = 1
         total_time = 0  # track the total amount of time used for learning
@@ -139,9 +140,7 @@ def iNMF_HALS(
             # print result information
             total_time += time.time() - iter_start_time
             print(
-                "Iter: {}, Total time: {}, Training Obj: {}".format(
-                    iteration, total_time, obj_train
-                )
+                f"Iter: {iteration}, Total time: {total_time}, Training Obj: {obj_train}"
             )
 
             if obj_train <= obj_train_prev:
@@ -160,4 +159,3 @@ def iNMF_HALS(
         liger_object.adata_list[i].varm["W"] = final_W
         liger_object.adata_list[i].varm["V"] = final_V[i]
 
-    return None

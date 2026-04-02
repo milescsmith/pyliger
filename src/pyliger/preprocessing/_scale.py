@@ -1,16 +1,14 @@
-from typing import Optional
-
 import lazy_loader as lazy
-h5sparse = lazy.load("h5sparse", error_on_import=True)
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.utils.sparsefuncs import inplace_column_scale
 
 from pyliger._utilities import _h5_idx_generator
 
+h5sparse = lazy.load("h5sparse", error_on_import=True)
 
 def scale_not_center(
-    liger_object, remove_missing=True, chunk_size: Optional[int] = 1000
+    liger_object, remove_missing=True, chunk_size: int | None = 1000
 ) -> None:
     """Scale genes by root-mean-square across cells
 
@@ -56,7 +54,6 @@ def scale_not_center(
         else:
             liger_object.adata_list[idx] = _scale_matrix(adata, var_gene_idx)
 
-    return None
 
 
 def _scale_online(adata, var_gene_idx, chunk_size):

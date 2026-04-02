@@ -1,4 +1,5 @@
 import lazy_loader as lazy
+
 np = lazy.load("numpy", error_on_import=True)
 pd  = lazy.load("pandas", error_on_import=True)
 
@@ -6,7 +7,6 @@ pd  = lazy.load("pandas", error_on_import=True)
 def calculate_qc(liger_object):
     for adata in liger_object.adata_list:
         pass
-    return None
 
 
 def calculate_mt_pct(liger_object, data_source):
@@ -22,7 +22,6 @@ def calculate_mt_pct(liger_object, data_source):
             / liger_object.adata_list[idx].shape[1]
         )
 
-    return None
 
 
 def _cal_mt_adata(adata, pattern):
@@ -48,7 +47,7 @@ def filtering(
         datasets_use = list(range(num_samples))
 
     if combine:
-        gene_union = pd.concat([adata.var for adata in liger_object.adata_list])
+        # gene_union = pd.concat([adata.var for adata in liger_object.adata_list])
         pass
     else:
         for i in datasets_use:
@@ -79,9 +78,9 @@ def _filter_adata(
     num_cell_rm = np.sum(~gene_filter)
     num_gene_rm = np.sum(~cell_filter & ~count_filter)
     if num_cell_rm > 0:
-        print("Removing {} cells not passed the threshold.".format(num_cell_rm))
+        print(f"Removing {num_cell_rm} cells not passed the threshold.")
 
     if num_gene_rm > 0:
-        print("Removing {} genes not passed the threshold.".format(num_gene_rm))
+        print(f"Removing {num_gene_rm} genes not passed the threshold.")
 
     return adata[gene_filter, cell_filter & count_filter].copy()

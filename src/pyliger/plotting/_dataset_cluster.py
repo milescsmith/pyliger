@@ -1,5 +1,4 @@
-import lazy_loader as lazy
-np = lazy.load("numpy", error_on_import=True)
+import numpy as np
 from plotnine import (
     aes,
     geom_point,

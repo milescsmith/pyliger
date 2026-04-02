@@ -1,4 +1,5 @@
 import lazy_loader as lazy
+
 np = lazy.load("numpy", error_on_import=True)
 pd  = lazy.load("pandas", error_on_import=True)
 from anndata import AnnData
@@ -9,7 +10,7 @@ The pyliger main class
 """
 
 
-class Liger(object):
+class Liger:
     """Main LIGER class
 
     The liger object is created from two or more single cell datasets. To construct a
@@ -57,13 +58,13 @@ class Liger(object):
 
     __slots__ = (
         "adata_list",
-        "cell_data",
-        "var_genes",
-        "tsne_coords",
-        "alignment_clusters",
         "agg_data",
+        "alignment_clusters",
+        "cell_data",
         "parameters",
         "snf",
+        "tsne_coords",
+        "var_genes",
         "version",
     )
 
@@ -106,10 +107,7 @@ class Liger(object):
 
     def show(self):
         print(
-            "An object of class liger with {} datasets and {} total cells.".format(
-                self.num_samples,
-                len(self.cell_data)
-            )
+            f"An object of class liger with {self.num_samples} datasets and {len(self.cell_data)} total cells."
         )
 
     def add_adata(self, new_arrive):
@@ -147,11 +145,10 @@ class Liger(object):
             if combine:
                 data = vstack(data)
 
+        elif set_name == "raw":
+            data = self.adata_list[dataset_use].X
         else:
-            if set_name == "raw":
-                data = self.adata_list[dataset_use].X
-            else:
-                data = self.adata_list[dataset_use].layers[set_name]
+            data = self.adata_list[dataset_use].layers[set_name]
 
         return data
 
@@ -194,17 +191,16 @@ class Liger(object):
         if var_name == "W":
             adata = self.adata_list[0]
             var_values = adata.varm[var_name][adata.uns["var_gene_idx"], :]
+        elif dataset_use == "all":
+            var_values = np.concatenate(
+                [
+                    adata.varm[var_name][adata.uns["var_gene_idx"], :]
+                    for adata in self.adata_list
+                ]
+            )
         else:
-            if dataset_use == "all":
-                var_values = np.concatenate(
-                    [
-                        adata.varm[var_name][adata.uns["var_gene_idx"], :]
-                        for adata in self.adata_list
-                    ]
-                )
-            else:
-                adata = self.adata_list[dataset_use]
-                var_values = adata.varm[var_name][adata.uns["var_gene_idx"], :]
+            adata = self.adata_list[dataset_use]
+            var_values = adata.varm[var_name][adata.uns["var_gene_idx"], :]
 
         return var_values
 
@@ -247,7 +243,6 @@ class Liger(object):
             ]
             idx += self.adata_list[i].shape[0]
 
-        return None
 
     def get_obsm(self, obsm_name, dataset_use="all"):
         """ """

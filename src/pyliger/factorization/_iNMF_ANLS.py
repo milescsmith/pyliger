@@ -1,4 +1,5 @@
 import lazy_loader as lazy
+
 np = lazy.load("numpy", error_on_import=True)
 from tqdm import tqdm
 
@@ -85,16 +86,12 @@ def optimize_ALS(
 
     if k >= np.min(ns):
         raise ValueError(
-            "Select k lower than the number of cells in smallest dataset: {}".format(
-                np.min(ns)
-            )
+            f"Select k lower than the number of cells in smallest dataset: {np.min(ns)}"
         )
 
     if k >= num_genes:
         raise ValueError(
-            "Select k lower than the number of variable genes: {}".format(
-                len(liger_object.var_genes)
-            )
+            f"Select k lower than the number of variable genes: {len(liger_object.var_genes)}"
         )
 
     best_obj = np.inf
@@ -174,7 +171,7 @@ def optimize_ALS(
             best_seed = rand_seed + i - 1
 
         if print_obj:
-            print("Objective: {}".format(best_obj))
+            print(f"Objective: {best_obj}")
 
     # liger_object.W = final_W.transpose()
 
@@ -193,4 +190,3 @@ def optimize_ALS(
         # liger_object.adata_list[i].varm['W'] = save_W
         # liger_object.adata_list[i].varm['V'] = save_V
 
-    return None
